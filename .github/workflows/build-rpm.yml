@@ -1,0 +1,53 @@
+name: Build Sailfish OS RPMs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  luanti:
+    name: Build luanti engine (aarch64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build RPM
+        uses: R1tschY/sailfish-build-rpm@v1
+        with:
+          arch: aarch64
+          release: 5.1.0.11
+          source-dir: rpm
+          specfile: rpm/luanti.spec
+          output-dir: RPMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luanti-rpm
+          path: RPMS/**/*.rpm
+
+  voxelibre:
+    name: Build harbour-voxelibre game (noarch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # mb2 resolves Source1-7 relative to the spec file, so the launcher,
+      # desktop file and icons must sit next to the spec.
+      - name: Stage spec sources
+        run: |
+          cp packaging/launch.sh packaging/minetest.conf packaging/harbour-voxelibre.desktop rpm/
+          cp icons/hicolor/86x86/apps/harbour-voxelibre.png  rpm/harbour-voxelibre-86.png
+          cp icons/hicolor/108x108/apps/harbour-voxelibre.png rpm/harbour-voxelibre-108.png
+          cp icons/hicolor/128x128/apps/harbour-voxelibre.png rpm/harbour-voxelibre-128.png
+          cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
+      - name: Build RPM
+        uses: R1tschY/sailfish-build-rpm@v1
+        with:
+          arch: aarch64
+          release: 5.1.0.11
+          source-dir: rpm
+          specfile: rpm/harbour-voxelibre.spec
+          output-dir: RPMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harbour-voxelibre-rpm
+          path: RPMS/**/*.rpm

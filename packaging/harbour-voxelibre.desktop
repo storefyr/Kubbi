@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=VoxeLibre
+Comment=Survival sandbox voxel game
+Icon=harbour-voxelibre
+Exec=/bin/sh /usr/share/harbour-voxelibre/launch.sh
+Terminal=false
+StartupNotify=false
+Categories=Game;
+X-Nemo-Application-Type=no-invoker
+
+[X-Sailjail]
+Sandboxing=Disabled
