@@ -6,6 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+env:
+  TARGET: SailfishOS-5.1.0.11-aarch64
+  IMAGE: ghcr.io/r1tschy/sailfishos-platform-sdk:5.1.0.11-aarch64
+
 jobs:
   luanti:
     name: Build luanti engine (aarch64)
@@ -13,12 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build RPM
-        uses: R1tschY/sailfish-build-rpm@v1
-        with:
-          arch: aarch64
-          release: 5.1.0.11
-          specfile: rpm/luanti.spec
-          output-dir: RPMS
+        run: |
+          mkdir -p RPMS
+          chmod 777 "$PWD" RPMS
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 --output-dir /home/mersdk/project/RPMS \
+                  -t "${TARGET}" \
+                  --specfile /home/mersdk/project/rpm/luanti.spec \
+                  build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
         with:
           name: luanti-rpm
@@ -29,8 +38,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # mb2 resolves Source1-7 relative to the spec file, so the launcher,
-      # desktop file and icons must sit next to the spec.
+      # mb2 resolves local Source1-7 relative to the spec file (_sourcedir is
+      # the directory containing the spec), so the launcher, desktop file and
+      # icons must sit next to the spec.
       - name: Stage spec sources
         run: |
           cp packaging/launch.sh packaging/minetest.conf packaging/harbour-voxelibre.desktop rpm/
@@ -39,12 +49,17 @@ jobs:
           cp icons/hicolor/128x128/apps/harbour-voxelibre.png rpm/harbour-voxelibre-128.png
           cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
       - name: Build RPM
-        uses: R1tschY/sailfish-build-rpm@v1
-        with:
-          arch: aarch64
-          release: 5.1.0.11
-          specfile: rpm/harbour-voxelibre.spec
-          output-dir: RPMS
+        run: |
+          mkdir -p RPMS
+          chmod 777 "$PWD" RPMS
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 --output-dir /home/mersdk/project/RPMS \
+                  -t "${TARGET}" \
+                  --specfile /home/mersdk/project/rpm/harbour-voxelibre.spec \
+                  build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
         with:
           name: harbour-voxelibre-rpm
