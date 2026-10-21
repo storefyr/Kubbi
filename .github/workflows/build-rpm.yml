@@ -17,7 +17,6 @@ jobs:
         with:
           arch: aarch64
           release: 5.1.0.11
-          source-dir: rpm
           specfile: rpm/luanti.spec
           output-dir: RPMS
       - uses: actions/upload-artifact@v4
@@ -44,7 +43,6 @@ jobs:
         with:
           arch: aarch64
           release: 5.1.0.11
-          source-dir: rpm
           specfile: rpm/harbour-voxelibre.spec
           output-dir: RPMS
       - uses: actions/upload-artifact@v4
