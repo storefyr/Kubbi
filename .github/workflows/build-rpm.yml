@@ -16,6 +16,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # mb2 build runs rpmbuild with --noprep, so %prep never executes and
+      # Source0 is never unpacked. Download and extract the source tarball
+      # into the project root so the explicit 'cd luanti-%{version}' in
+      # %build/%install finds it. The tarball is also placed in rpm/ so
+      # rpm's _sourcedir ($PWD/rpm) can resolve Source0 if needed.
+      - name: Fetch and extract luanti source
+        run: |
+          curl -fsSL -o rpm/luanti-5.12.0.tar.gz \
+              https://github.com/luanti-org/luanti/archive/refs/tags/5.12.0.tar.gz
+          tar -xzf rpm/luanti-5.12.0.tar.gz
       - name: Build RPM
         run: |
           chmod 777 "$PWD"
@@ -46,6 +56,15 @@ jobs:
           cp icons/hicolor/108x108/apps/harbour-voxelibre.png rpm/harbour-voxelibre-108.png
           cp icons/hicolor/128x128/apps/harbour-voxelibre.png rpm/harbour-voxelibre-128.png
           cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
+      # mb2 build runs rpmbuild with --noprep, so %prep never executes and
+      # Source0 is never unpacked. Download and extract the game data into
+      # the project root so the explicit 'cd VoxeLibre-%{version}' in
+      # %install finds it.
+      - name: Fetch and extract VoxeLibre source
+        run: |
+          curl -fsSL -o rpm/VoxeLibre-0.92.3.tar.gz \
+              https://github.com/VoxeLibre/VoxeLibre/archive/refs/tags/0.92.3.tar.gz
+          tar -xzf rpm/VoxeLibre-0.92.3.tar.gz
       - name: Build RPM
         run: |
           chmod 777 "$PWD"
