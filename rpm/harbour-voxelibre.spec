@@ -91,7 +91,7 @@ install -m 0644 %{SOURCE6} %{buildroot}%{_datadir}/icons/hicolor/128x128/apps/ha
 install -m 0644 %{SOURCE7} %{buildroot}%{_datadir}/icons/hicolor/172x172/apps/harbour-voxelibre.png
 
 %files
-%license LICENSE.txt
+%license VoxeLibre-%{voxelibre_version}/LICENSE.txt
 %{_datadir}/luanti/games/voxelibre/
 %{_datadir}/harbour-voxelibre/
 %{_datadir}/applications/harbour-voxelibre.desktop

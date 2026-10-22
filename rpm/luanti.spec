@@ -120,10 +120,9 @@ rm -rf %{buildroot}%{_mandir}
 rm -rf %{buildroot}%{_datadir}/luanti/games
 
 %files
-%license LICENSE.txt COPYING.LESSER
+%license luanti-%{luanti_version}/LICENSE.txt luanti-%{luanti_version}/COPYING.LESSER
 %{_bindir}/luanti
 %{_datadir}/luanti/
-%exclude %{_datadir}/luanti/games
 
 %changelog
 * Wed Oct 21 2026 storefyr <storefyr@users.noreply.github.com> - 5.12.0-1
