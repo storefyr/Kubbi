@@ -1,5 +1,8 @@
 %define luanti_version 5.12.0
 %global debug_package %{nil}
+# meego-rpm-config injects its own %prep (LANG=C, unset DISPLAY). Defining
+# this macro overrides it with an empty body so rpm sees only one %prep.
+%global __spec_prep_template #!/bin/sh
 
 Name:     luanti
 Version:  %{luanti_version}
@@ -81,10 +84,13 @@ Links:
   Bugtracker: https://github.com/luanti-org/luanti/issues
 %endif
 
+%prep
+# Empty: mb2 runs rpmbuild --noprep so this never executes. Sources are
+# extracted by CI before the build. The patch is applied in %build.
+
 %build
-# No %prep section: mb2 runs rpmbuild --noprep and its rpmspec --query
-# fails with "second %prep" when meego-rpm-config also injects one.
-# Since %prep never runs anyway, we apply the patch manually here.
+# Apply patch manually: %prep never runs under mb2 (--noprep), so the
+# Patch0 directive has no effect. $PWD is the project root (rpm/ lives here).
 PATCH_FILE="$PWD/rpm/luanti-sailfish-gpu-oom.patch"
 cd luanti-%{luanti_version}
 patch -p1 --forward < "$PATCH_FILE" || true
