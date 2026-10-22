@@ -1,0 +1,120 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.1.0)'
+        required: true
+
+env:
+  TARGET: SailfishOS-5.1.0.11-aarch64
+  IMAGE: ghcr.io/r1tschy/sailfishos-platform-sdk:5.1.0.11-aarch64
+
+jobs:
+  build:
+    name: Build RPMs and create release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Fetch and extract luanti source
+        run: |
+          curl -fsSL -o rpm/luanti-5.12.0.tar.gz \
+              https://github.com/luanti-org/luanti/archive/refs/tags/5.12.0.tar.gz
+          tar -xzf rpm/luanti-5.12.0.tar.gz
+
+      - name: Build luanti RPM
+        run: |
+          chmod 777 "$PWD"
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 -t "${TARGET}" \
+                  --specfile /home/mersdk/project/rpm/luanti.spec \
+                  build -j"$(nproc)"
+
+      - name: Stage game spec sources
+        run: |
+          cp packaging/launch.sh packaging/minetest.conf packaging/harbour-voxelibre.desktop rpm/
+          cp icons/hicolor/86x86/apps/harbour-voxelibre.png  rpm/harbour-voxelibre-86.png
+          cp icons/hicolor/108x108/apps/harbour-voxelibre.png rpm/harbour-voxelibre-108.png
+          cp icons/hicolor/128x128/apps/harbour-voxelibre.png rpm/harbour-voxelibre-128.png
+          cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
+
+      - name: Fetch and extract VoxeLibre source
+        run: |
+          curl -fsSL -o rpm/VoxeLibre-0.92.3.tar.gz \
+              https://github.com/VoxeLibre/VoxeLibre/archive/refs/tags/0.92.3.tar.gz
+          tar -xzf rpm/VoxeLibre-0.92.3.tar.gz
+
+      - name: Build harbour-voxelibre RPM
+        run: |
+          chmod 777 "$PWD"
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 -t "${TARGET}" \
+                  --specfile /home/mersdk/project/rpm/harbour-voxelibre.spec \
+                  build -j"$(nproc)"
+
+      - name: Collect RPMs
+        run: |
+          mkdir -p release-assets
+          cp RPMS/luanti-*.aarch64.rpm release-assets/
+          cp RPMS/harbour-voxelibre-*.noarch.rpm release-assets/
+          ls -lh release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/luanti-*.aarch64.rpm
+            release-assets/harbour-voxelibre-*.noarch.rpm
+          body: |
+            # VoxeLibre 0.92.3 + Luanti 5.12.0 for Sailfish OS
+
+            Test release of VoxeLibre (a Luanti/Minetest voxel game) packaged for **Sailfish OS** on **Jolla Phone (2026)** (aarch64, SFOS 5.2).
+
+            ## What's included
+
+            | File | Description | Size |
+            |------|-------------|------|
+            | `luanti-5.12.0-1.aarch64.rpm` | Luanti 5.12.0 game engine (client) — SDL2/Wayland, OpenGL ES 2 | 7.5 MB |
+            | `harbour-voxelibre-0.92.3-1.noarch.rpm` | VoxeLibre 0.92.3 game data + launcher + icons | 75 MB |
+
+            ## Installation on device
+
+            ```sh
+            # Copy both RPMs to the phone (USB, scp, etc.), then:
+            devel-su pkcon install-local luanti-5.12.0-1.aarch64.rpm harbour-voxelibre-0.92.3-1.noarch.rpm
+            ```
+
+            The VoxeLibre icon appears in the app grid. On first start the launcher creates a phone-friendly `minetest.conf` in `~/.local/share/luanti/` with GLES2 renderer, fullscreen, and touch controls enabled.
+
+            ## Technical details
+
+            - **Engine**: Luanti 5.12.0, built with `-DENABLE_GLES2=ON -DENABLE_OPENGL=OFF -DUSE_SDL2=ON`
+            - **LuaJIT**: Not available on SFOS — Luanti falls back to bundled Lua 5.1
+            - **Launcher**: `harbour-voxelibre.desktop` with `X-Nemo-Application-Type=no-invoker` + `[X-Sailjail] Sandboxing=Disabled`
+            - **Build target**: `SailfishOS-5.1.0.11-aarch64` (5.1-target apps run on SFOS 5.2)
+
+            ## Source
+
+            - Repo: https://github.com/storefyr/Kubbi
+            - PR: https://github.com/storefyr/Kubbi/pull/1
+            - Luanti: https://github.com/luanti-org/luanti (tag 5.12.0)
+            - VoxeLibre: https://github.com/VoxeLibre/VoxeLibre (tag 0.92.3)
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
