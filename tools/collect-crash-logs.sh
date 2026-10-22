@@ -1,89 +1,32 @@
 #!/bin/sh
-# Samler crash-logs fra VoxeLibre på Sailfish OS og udskriver det vigtigste.
+# Minimal crash-diagnose for VoxeLibre på Sailfish OS.
 # Kør som normal bruger:  sh collect-crash-logs.sh
-# Kopier outputtet og send det i chatten — så gemmer jeg det i repoet.
-#
-# Fuld rapport gemmes også i /tmp/voxelibre-crash-report.txt
+# Output er KORT — kopier det hele på én gang og send det i chatten.
 
-REPORT=/tmp/voxelibre-crash-report.txt
 CONF="$HOME/.local/share/luanti/minetest.conf"
-: > "$REPORT"
+TMPCONF=/tmp/minetest-debug.conf
+cp "$CONF" "$TMPCONF" 2>/dev/null || true
+echo "opengl_debug = true" >> "$TMPCONF"
+export SDL_VIDEODRIVER=wayland
 
-echo "=== VoxeLibre crash report $(date) ===" >> "$REPORT"
-echo "" >> "$REPORT"
-
-# 1. Systeminfo
-echo "--- System ---" >> "$REPORT"
-uname -a >> "$REPORT" 2>&1
-free -m | head -n 2 >> "$REPORT"
-echo "" >> "$REPORT"
-
-# 2. Seneste debug.txt
-echo "--- debug.txt (sidste 40 linjer) ---" >> "$REPORT"
-tail -n 40 "$HOME/.minetest/debug.txt" >> "$REPORT" 2>&1
-echo "" >> "$REPORT"
-
-# 3. Kør spillet under gdb og fang backtrace
-echo "--- gdb backtrace ---" >> "$REPORT"
-gdb -batch \
-    -ex 'set pagination off' \
-    -ex run \
-    -ex 'bt 30' \
-    -ex 'info threads' \
-    -ex 'thread apply all bt 8' \
-    --args /usr/bin/luanti --gameid voxelibre --config "$CONF" \
-    >> "$REPORT" 2>&1
-echo "" >> "$REPORT"
-
-# 4. GPU/driver-relaterede kernel-beskeder (kræver root)
-echo "--- dmesg (mali/gpu/drm, sidste 20) ---" >> "$REPORT"
-devel-su dmesg 2>/dev/null | grep -iE 'mali|gpu|drm|hang|reset|page.?fault|oom' | tail -n 20 >> "$REPORT"
-echo "" >> "$REPORT"
-
-# 5. journalctl for luanti/EGL/Mali (kræver root)
-echo "--- journalctl (luanti/egl/mali/oom, sidste 20) ---" >> "$REPORT"
-devel-su journalctl -b --no-pager 2>/dev/null | grep -iE 'luanti|mali|egl|killed|segfault|oom|core' | tail -n 20 >> "$REPORT"
-echo "" >> "$REPORT"
-
-# 6. Aktuel konfiguration (kun grafik-relevante indstillinger)
-echo "--- minetest.conf (grafik-indstillinger) ---" >> "$REPORT"
-grep -iE 'video_driver|fullscreen|screen_|vsync|fsaa|antialias|mip_map|shader|post_proc|bloom|volumetric|auto_exposure|mesh_cache|viewing_range|max_block|texture_min|undersampling|client_mapblock|enable_particles|clouds|enable_fog|smooth_light|node_highlight|enable_minimap|translucent|enable_damage|active_block|active_object' "$CONF" >> "$REPORT" 2>&1
-
-# --- Udskriv kun det vigtigste ---
-clear
-echo "===== VOXELIBRE CRASH ESSENS ====="
+echo "=== DIAGNOSE START $(date '+%H:%M:%S') ==="
 echo ""
 
-echo ">>> SYSTEM + RAM"
-echo "----------------------------------------"
-sed -n '/^--- System ---/,/^--- debug.txt/p' "$REPORT" | grep -v '^--- ' | grep -v '^$'
+echo "--- gdb (kører spillet, crasher med vilje) ---"
+gdb -batch -ex 'set pagination off' -ex run -ex 'bt 20' \
+    --args /usr/bin/luanti --gameid voxelibre --config "$TMPCONF" 2>&1 \
+  | grep -E 'Program received|signal SIG|#[0-9]+|Assertion|assert|exited'
 echo ""
 
-echo ">>> SPILLETS LOG (debug.txt, sidste 12)"
-echo "----------------------------------------"
-sed -n '/^--- debug.txt/,/^--- gdb/p' "$REPORT" | grep -v '^--- ' | grep -v '^$' | tail -n 12
+echo "--- debug.txt (sidste 8 linjer) ---"
+tail -n 8 "$HOME/.minetest/debug.txt" 2>&1
 echo ""
 
-echo ">>> GDB BACKTRACE"
-echo "----------------------------------------"
-sed -n '/^--- gdb backtrace ---/,/^--- dmesg/p' "$REPORT" \
-  | grep -E 'Program received|signal SIG|#[0-9]+|assert|Assertion|COpenGL|Texture|glGen|Thread [0-9]|exited with|Inferior' \
-  | head -n 35
+echo "--- dmesg Mali/GPU ---"
+devel-su dmesg 2>/dev/null | grep -iE 'mali|gpu|drm|hang|reset|oom' | tail -n 5
 echo ""
 
-echo ">>> GPU/KERNEL-FEJL (Mali, dmesg)"
-echo "----------------------------------------"
-sed -n '/^--- dmesg/,/^--- journalctl/p' "$REPORT" | grep -v '^--- ' | grep -v '^$'
+echo "--- Grafik-config ---"
+grep -iE '^(video_driver|fullscreen|screen_w|screen_h|vsync|fsaa|antialiasing|mip_map|enable_shaders|enable_post_processing|enable_bloom|enable_mesh_cache|viewing_range|max_block_send_distance|max_block_generate_distance|texture_min_size|undersampling|client_mapblock_limit|enable_particles|clouds|enable_fog|smooth_lighting|node_highlighting|enable_minimap|active_block_range|active_object_send_range_blocks|opengl_debug) ' "$CONF" 2>&1
 echo ""
-
-echo ">>> JOURNAL (EGL, OOM, kills)"
-echo "----------------------------------------"
-sed -n '/^--- journalctl/,/^--- minetest/p' "$REPORT" | grep -v '^--- ' | grep -v '^$'
-echo ""
-
-echo ">>> GRAFIK-KONFIGURATION"
-echo "----------------------------------------"
-sed -n '/^--- minetest.conf/,$p' "$REPORT" | grep -v '^--- minetest.conf' | grep -v '^$'
-echo ""
-echo "===== SLUT PÅ ESSENS ====="
-echo "Fuld rapport: $REPORT ($(wc -l < "$REPORT" | tr -d ' ') linjer)"
+echo "=== DIAGNOSE SLUT ==="
