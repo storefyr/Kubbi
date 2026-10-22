@@ -76,6 +76,14 @@ jobs:
           cp RPMS/harbour-voxelibre-*.noarch.rpm release-assets/
           ls -lh release-assets/
 
+      # Remove any previous release for this tag so stale assets from an
+      # earlier (broken) run are not left attached.
+      - name: Delete existing release for this tag
+        if: github.event_name == 'push'
+        run: gh release delete "${GITHUB_REF_NAME}" --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
