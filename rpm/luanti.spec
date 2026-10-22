@@ -1,9 +1,11 @@
 %define luanti_version 5.12.0
 %global debug_package %{nil}
-# meego-rpm-config defines a %prep macro (LANG=C, unset DISPLAY) that
-# injects a literal "%prep" into the spec. Override it to expand to
-# nothing so rpm doesn't see a second %prep section.
+# meego-rpm-config defines %prep/%build/%install as macros that inject
+# literal section headers into the spec. Override them to expand to
+# nothing so rpm doesn't see duplicate sections.
 %global prep %{nil}
+%global build %{nil}
+%global install %{nil}
 
 Name:     luanti
 Version:  %{luanti_version}
