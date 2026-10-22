@@ -34,6 +34,7 @@ jobs:
               --workdir /home/mersdk/project \
               "${IMAGE}" \
               mb2 -t "${TARGET}" \
+                  --no-fix-version \
                   --specfile /home/mersdk/project/rpm/luanti.spec \
                   build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
@@ -73,6 +74,7 @@ jobs:
               --workdir /home/mersdk/project \
               "${IMAGE}" \
               mb2 -t "${TARGET}" \
+                  --no-fix-version \
                   --specfile /home/mersdk/project/rpm/harbour-voxelibre.spec \
                   build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
