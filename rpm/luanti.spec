@@ -81,13 +81,10 @@ Links:
   Bugtracker: https://github.com/luanti-org/luanti/issues
 %endif
 
-%prep
-%autosetup -n luanti-%{luanti_version} -p1
-
 %build
-# Resolve patch path BEFORE cd: mb2 runs rpmbuild --noprep, so %prep (and
-# its automatic patch application) is skipped. Apply manually. $PWD here is
-# the project root where rpm/ lives.
+# No %prep section: mb2 runs rpmbuild --noprep and its rpmspec --query
+# fails with "second %prep" when meego-rpm-config also injects one.
+# Since %prep never runs anyway, we apply the patch manually here.
 PATCH_FILE="$PWD/rpm/luanti-sailfish-gpu-oom.patch"
 cd luanti-%{luanti_version}
 patch -p1 --forward < "$PATCH_FILE" || true
