@@ -6,9 +6,9 @@ Release:  1
 Summary:  Luanti voxel game engine (client) for Sailfish OS
 License:  LGPL-2.1-or-later
 URL:      https://www.luanti.org/
-# The tag archive contains IrrlichtMt (irr/) and bundled Lua/mini-gmp/jsoncpp
-# in lib/, so no submodules are needed. SHA256 of the git-archive tarball
-# (identical to the GitHub auto-generated tag tarball):
+# The GitHub tag archive contains IrrlichtMt (irr/) and bundled
+# Lua/mini-gmp/jsoncpp in lib/, so no submodules are needed.
+# SHA256 of the tarball:
 #   ec853ac6a0020a38da9e9cecf51717d5b86de70a2e073843abeeeca943f9eac9
 Source0:  https://github.com/luanti-org/luanti/archive/refs/tags/%{luanti_version}.tar.gz
 
@@ -34,15 +34,13 @@ BuildRequires:  pkgconfig(libpulse-simple)
 BuildRequires:  pkgconfig(zlib)
 BuildRequires:  pkgconfig(libzstd)
 BuildRequires:  pkgconfig(libpng)
-BuildRequires:  pkgconfig(libjpeg)
+# Sailfish ships libjpeg-turbo 1.2.1 whose devel package has no .pc file;
+# IrrlichtMt's find_package(JPEG) only needs the headers and library.
+BuildRequires:  libjpeg-turbo-devel
 BuildRequires:  pkgconfig(freetype2)
 BuildRequires:  pkgconfig(libcurl)
-BuildRequires:  sqlite3-devel
-BuildRequires:  pkgconfig(sqlite3)
-# LuaJIT is strongly preferred on a phone. Not all Sailfish targets ship it;
-# Luanti then falls back to its bundled Lua 5.1 interpreter. If it exists it
-# will be picked up automatically by cmake/Modules/FindLuaJIT.cmake.
-BuildRequires:  lua51-luajit-devel
+# Sailfish's SQLite devel package is named sqlite-devel (ships sqlite3.pc).
+BuildRequires:  sqlite-devel
 # Sound (Sailfish ships the "OpenAL" package, see sailfishos/libopenal)
 BuildRequires:  OpenAL-devel
 BuildRequires:  pkgconfig(openal)
@@ -51,9 +49,9 @@ BuildRequires:  pkgconfig(vorbis)
 BuildRequires:  pkgconfig(vorbisfile)
 BuildRequires:  libogg-devel
 BuildRequires:  pkgconfig(ogg)
-# GMP/jsoncpp fall back to bundled mini-gmp/jsoncpp if absent.
+# GMP is available on Sailfish. LuaJIT and jsoncpp are not; Luanti falls
+# back to its bundled Lua 5.1 interpreter and bundled jsoncpp.
 BuildRequires:  gmp-devel
-BuildRequires:  jsoncpp-devel
 
 %description
 Luanti (formerly Minetest) is an open source voxel game engine. This package
@@ -84,7 +82,7 @@ Links:
 # GLES2-only: Sailfish (Wayland/libhybris) has no desktop GL. IrrlichtMt
 # selects the SDL2 device automatically (USE_SDL2=ON) and therefore needs
 # no X11. The runtime driver is chosen with "video_driver = ogles2" in
-# minetest.conf.
+# minetest.conf. rpm's %autosetup has already cd'd into %{buildsubdir}.
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_CLIENT=ON \
@@ -101,7 +99,7 @@ Links:
     -DENABLE_REDIS=OFF \
     -DENABLE_SPATIAL=OFF \
     -DENABLE_PROMETHEUS=OFF \
-    -DENABLE_LUAJIT=ON \
+    -DENABLE_LUAJIT=OFF \
     -DENABLE_LTO=OFF \
     -DENABLE_GLES2=ON \
     -DENABLE_OPENGL=OFF \
@@ -110,6 +108,7 @@ Links:
 %cmake_build
 
 %install
+# rpm has already cd'd into %{buildsubdir} for %install as well.
 %cmake_install
 # We ship our own .desktop/launcher for the game package; drop upstream's.
 rm -f %{buildroot}%{_datadir}/applications/org.luanti.luanti.desktop

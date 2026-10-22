@@ -67,8 +67,9 @@ docker run --rm -v "$PWD":/home/mersdk/kubbi -w /home/mersdk/kubbi \
 
 - `rpm/luanti.spec` — engine. Builds with `-DENABLE_GLES2=ON
   -DENABLE_OPENGL=OFF -DENABLE_OPENGL3=OFF -DUSE_SDL2=ON` because Sailfish
-  (Wayland + libhybris) only provides OpenGL ES. LuaJIT is used when present;
-  Luanti otherwise falls back to its bundled Lua 5.1, mini-gmp and jsoncpp.
+  (Wayland + libhybris) only provides OpenGL ES. No Sailfish target ships
+  LuaJIT or jsoncpp, so the engine uses its bundled Lua 5.1 interpreter and
+  bundled jsoncpp (slower Lua, fully functional).
 - `rpm/harbour-voxelibre.spec` — game data (noarch). Installs the VoxeLibre
   tree into the engine's games directory.
 - `packaging/launch.sh` — launcher run from the icon. Seeds a default
@@ -91,6 +92,8 @@ docker run --rm -v "$PWD":/home/mersdk/kubbi -w /home/mersdk/kubbi \
   `smatkovi/0ad-sailfish` with a self-rotation patch) is not implemented yet.
 - **Touch controls** are enabled via `touch_controls = true`; in-game
   playability on the phone still needs on-device testing.
+- **LuaJIT**: not packaged for Sailfish OS, so mods run on the bundled Lua
+  5.1 interpreter (correct, but slower than LuaJIT).
 - **Performance**: defaults are conservative (view distance 60). Tweak
   `~/.local/share/luanti/minetest.conf` to taste.
 - The build has not yet been verified on-device; CI builds the RPMs, but the

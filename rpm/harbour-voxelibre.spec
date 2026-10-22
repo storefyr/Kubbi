@@ -6,8 +6,7 @@ Release:  1
 Summary:  VoxeLibre - survival sandbox voxel game for Sailfish OS
 License:  GPL-3.0-or-later
 URL:      https://codeberg.org/VoxeLibre/VoxeLibre
-# SHA256 of the git-archive tarball (identical to the GitHub auto-generated
-# tag tarball):
+# SHA256 of the GitHub tag tarball:
 #   c34858a18b64e03e57ef618a8e113133c5d64c0af3f7ede3d856ee7c04732b23
 Source0:  https://github.com/VoxeLibre/VoxeLibre/archive/refs/tags/%{voxelibre_version}.tar.gz
 Source1:  launch.sh
@@ -21,7 +20,6 @@ Source7:  harbour-voxelibre-172.png
 BuildArch:  noarch
 
 BuildRequires:  desktop-file-utils
-BuildRequires:  unzip
 
 Requires:  luanti >= 5.10
 Requires:  SDL2
@@ -59,11 +57,11 @@ Links:
 
 %build
 # Game data only; nothing to compile.
-true
 
 %install
-# Game data into the engine's system games directory. The game is
-# self-contained: its mods live in mods/, textures in textures/.
+# rpm has already cd'd into %{buildsubdir} (VoxeLibre-%{voxelibre_version}).
+
+# Game data into the engine's system games directory.
 install -d %{buildroot}%{_datadir}/luanti/games/voxelibre
 cp -a mods textures menu game.conf settingtypes.txt minetest.conf \
     LICENSE.txt \

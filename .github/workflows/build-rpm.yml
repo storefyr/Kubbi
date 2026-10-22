@@ -18,14 +18,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build RPM
         run: |
-          mkdir -p RPMS
-          chmod 777 "$PWD" RPMS
+          chmod 777 "$PWD"
           docker run --rm --privileged \
               --volume "$PWD":/home/mersdk/project \
               --workdir /home/mersdk/project \
               "${IMAGE}" \
-              mb2 --output-dir /home/mersdk/project/RPMS \
-                  -t "${TARGET}" \
+              mb2 -t "${TARGET}" \
                   --specfile /home/mersdk/project/rpm/luanti.spec \
                   build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
@@ -50,14 +48,12 @@ jobs:
           cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
       - name: Build RPM
         run: |
-          mkdir -p RPMS
-          chmod 777 "$PWD" RPMS
+          chmod 777 "$PWD"
           docker run --rm --privileged \
               --volume "$PWD":/home/mersdk/project \
               --workdir /home/mersdk/project \
               "${IMAGE}" \
-              mb2 --output-dir /home/mersdk/project/RPMS \
-                  -t "${TARGET}" \
+              mb2 -t "${TARGET}" \
                   --specfile /home/mersdk/project/rpm/harbour-voxelibre.spec \
                   build -j"$(nproc)"
       - uses: actions/upload-artifact@v4
