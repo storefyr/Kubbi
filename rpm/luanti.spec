@@ -112,10 +112,15 @@ cd luanti-%{luanti_version}
 %install
 cd luanti-%{luanti_version}
 %cmake_install
-# We ship our own .desktop/launcher for the game package; drop upstream's.
+# We ship our own .desktop/launcher for the game package; drop upstream's
+# desktop file, icons, metainfo, docs, man pages, and the legacy minetest
+# symlink.
 rm -f %{buildroot}%{_datadir}/applications/org.luanti.luanti.desktop
+rm -f %{buildroot}%{_bindir}/minetest
 rm -rf %{buildroot}%{_datadir}/doc
 rm -rf %{buildroot}%{_mandir}
+rm -rf %{buildroot}%{_datadir}/icons
+rm -rf %{buildroot}%{_datadir}/metainfo
 # Games are installed by game packages, not by the engine.
 rm -rf %{buildroot}%{_datadir}/luanti/games
 
