@@ -1,4 +1,5 @@
 %define luanti_version 5.12.0
+%global debug_package %{nil}
 
 Name:     luanti
 Version:  %{luanti_version}
@@ -79,10 +80,11 @@ Links:
 %autosetup -n luanti-%{luanti_version}
 
 %build
+cd luanti-%{luanti_version}
 # GLES2-only: Sailfish (Wayland/libhybris) has no desktop GL. IrrlichtMt
 # selects the SDL2 device automatically (USE_SDL2=ON) and therefore needs
 # no X11. The runtime driver is chosen with "video_driver = ogles2" in
-# minetest.conf. rpm's %autosetup has already cd'd into %{buildsubdir}.
+# minetest.conf.
 %cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_CLIENT=ON \
@@ -108,7 +110,7 @@ Links:
 %cmake_build
 
 %install
-# rpm has already cd'd into %{buildsubdir} for %install as well.
+cd luanti-%{luanti_version}
 %cmake_install
 # We ship our own .desktop/launcher for the game package; drop upstream's.
 rm -f %{buildroot}%{_datadir}/applications/org.luanti.luanti.desktop

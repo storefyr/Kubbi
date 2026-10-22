@@ -59,7 +59,7 @@ Links:
 # Game data only; nothing to compile.
 
 %install
-# rpm has already cd'd into %{buildsubdir} (VoxeLibre-%{voxelibre_version}).
+cd VoxeLibre-%{voxelibre_version}
 
 # Game data into the engine's system games directory.
 install -d %{buildroot}%{_datadir}/luanti/games/voxelibre
