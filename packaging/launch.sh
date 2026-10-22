@@ -13,6 +13,10 @@ USER_PATH="${MINETEST_USER_PATH:-$HOME/.local/share/luanti}"
 CONF="$USER_PATH/minetest.conf"
 DEFAULT_CONF=/usr/share/harbour-voxelibre/minetest.conf
 
+# Luanti reads MINETEST_USER_PATH to decide where worlds/configs live.
+# Without this export, data silently lands in ~/.minetest instead.
+export MINETEST_USER_PATH="$USER_PATH"
+
 # Luanti's IrrlichtMt touch layer handles gestures itself; SDL must not also
 # synthesise mouse events from the same fingers.
 export SDL_TOUCH_MOUSE_EVENTS=0

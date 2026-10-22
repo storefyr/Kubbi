@@ -12,6 +12,11 @@ URL:      https://www.luanti.org/
 # SHA256 of the tarball:
 #   ec853ac6a0020a38da9e9cecf51717d5b86de70a2e073843abeeeca943f9eac9
 Source0:  https://github.com/luanti-org/luanti/archive/refs/tags/%{luanti_version}.tar.gz
+# Replace fatal assert(name != 0) in IrrlichtMt's texture cache with a
+# graceful skip. On Sailfish OS (Mali-G610 via libhybris) glGenTextures
+# can return 0 under GPU memory pressure when loading heavy texture
+# atlases (e.g. VoxeLibre's 2874 textures). The assert caused SIGABRT.
+Patch0:   luanti-sailfish-gpu-oom.patch
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
@@ -77,10 +82,15 @@ Links:
 %endif
 
 %prep
-%autosetup -n luanti-%{luanti_version}
+%autosetup -n luanti-%{luanti_version} -p1
 
 %build
+# Resolve patch path BEFORE cd: mb2 runs rpmbuild --noprep, so %prep (and
+# its automatic patch application) is skipped. Apply manually. $PWD here is
+# the project root where rpm/ lives.
+PATCH_FILE="$PWD/rpm/luanti-sailfish-gpu-oom.patch"
 cd luanti-%{luanti_version}
+patch -p1 --forward < "$PATCH_FILE" || true
 # GLES2-only: Sailfish (Wayland/libhybris) has no desktop GL. IrrlichtMt
 # selects the SDL2 device automatically (USE_SDL2=ON) and therefore needs
 # no X11. The runtime driver is chosen with "video_driver = ogles2" in
