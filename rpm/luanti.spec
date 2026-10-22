@@ -1,11 +1,5 @@
 %define luanti_version 5.12.0
 %global debug_package %{nil}
-# meego-rpm-config defines %prep/%build/%install as macros that inject
-# literal section headers into the spec. Override them to expand to
-# nothing so rpm doesn't see duplicate sections.
-%global prep %{nil}
-%global build %{nil}
-%global install %{nil}
 
 Name:     luanti
 Version:  %{luanti_version}
@@ -87,13 +81,9 @@ Links:
   Bugtracker: https://github.com/luanti-org/luanti/issues
 %endif
 
-%prep
-# Empty: mb2 runs rpmbuild --noprep so this never executes. Sources are
-# extracted by CI before the build. The patch is applied in %build.
-
 %build
-# Apply patch manually: %prep never runs under mb2 (--noprep), so the
-# Patch0 directive has no effect. $PWD is the project root (rpm/ lives here).
+# Apply patch manually: mb2 runs rpmbuild --noprep so the Patch0
+# directive has no effect. PWD is the project root where rpm/ lives.
 PATCH_FILE="$PWD/rpm/luanti-sailfish-gpu-oom.patch"
 cd luanti-%{luanti_version}
 patch -p1 --forward < "$PATCH_FILE" || true
