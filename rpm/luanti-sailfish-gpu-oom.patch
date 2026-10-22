@@ -1,0 +1,17 @@
+--- a/irr/src/COpenGLCoreCacheHandler.h
++++ b/irr/src/COpenGLCoreCacheHandler.h
+@@ -102,8 +102,14 @@
+ #endif
+ 
+ 						auto name = static_cast<const TOpenGLTexture *>(texture)->getOpenGLTextureName();
+-						assert(name != 0);
++						if (name == 0) {
++							// GPU texture allocation failed (e.g. Mali GPU OOM on
++							// Sailfish OS under heavy texture-atlas load). Skip
++							// binding instead of asserting, so the game keeps
++							// running with degraded visuals.
++							return false;
++						}
+ 						GL.BindTexture(curTextureType, name);
+ 					} else {
+ 						texture = 0;

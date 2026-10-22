@@ -1,0 +1,83 @@
+name: Build Sailfish OS RPMs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  TARGET: SailfishOS-5.1.0.11-aarch64
+  IMAGE: ghcr.io/r1tschy/sailfishos-platform-sdk:5.1.0.11-aarch64
+
+jobs:
+  luanti:
+    name: Build luanti engine (aarch64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # mb2 build runs rpmbuild with --noprep, so %prep never executes and
+      # Source0 is never unpacked. Download and extract the source tarball
+      # into the project root so the explicit 'cd luanti-%{version}' in
+      # %build/%install finds it. The tarball is also placed in rpm/ so
+      # rpm's _sourcedir ($PWD/rpm) can resolve Source0 if needed.
+      - name: Fetch and extract luanti source
+        run: |
+          curl -fsSL -o rpm/luanti-5.12.0.tar.gz \
+              https://github.com/luanti-org/luanti/archive/refs/tags/5.12.0.tar.gz
+          tar -xzf rpm/luanti-5.12.0.tar.gz
+      - name: Build RPM
+        run: |
+          chmod 777 "$PWD"
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 -t "${TARGET}" \
+                  --no-fix-version \
+                  --specfile /home/mersdk/project/rpm/luanti.spec \
+                  build -j"$(nproc)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: luanti-rpm
+          path: RPMS/**/*.rpm
+
+  voxelibre:
+    name: Build harbour-voxelibre game (noarch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # mb2 resolves local Source1-7 relative to the spec file (_sourcedir is
+      # the directory containing the spec), so the launcher, desktop file and
+      # icons must sit next to the spec.
+      - name: Stage spec sources
+        run: |
+          cp packaging/launch.sh packaging/minetest.conf packaging/harbour-voxelibre.desktop rpm/
+          cp icons/hicolor/86x86/apps/harbour-voxelibre.png  rpm/harbour-voxelibre-86.png
+          cp icons/hicolor/108x108/apps/harbour-voxelibre.png rpm/harbour-voxelibre-108.png
+          cp icons/hicolor/128x128/apps/harbour-voxelibre.png rpm/harbour-voxelibre-128.png
+          cp icons/hicolor/172x172/apps/harbour-voxelibre.png rpm/harbour-voxelibre-172.png
+      # mb2 build runs rpmbuild with --noprep, so %prep never executes and
+      # Source0 is never unpacked. Download and extract the game data into
+      # the project root so the explicit 'cd VoxeLibre-%{version}' in
+      # %install finds it.
+      - name: Fetch and extract VoxeLibre source
+        run: |
+          curl -fsSL -o rpm/VoxeLibre-0.92.3.tar.gz \
+              https://github.com/VoxeLibre/VoxeLibre/archive/refs/tags/0.92.3.tar.gz
+          tar -xzf rpm/VoxeLibre-0.92.3.tar.gz
+      - name: Build RPM
+        run: |
+          chmod 777 "$PWD"
+          docker run --rm --privileged \
+              --volume "$PWD":/home/mersdk/project \
+              --workdir /home/mersdk/project \
+              "${IMAGE}" \
+              mb2 -t "${TARGET}" \
+                  --no-fix-version \
+                  --specfile /home/mersdk/project/rpm/harbour-voxelibre.spec \
+                  build -j"$(nproc)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harbour-voxelibre-rpm
+          path: RPMS/**/*.rpm
